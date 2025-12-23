@@ -84,7 +84,7 @@ iframe {
 <div class="results" id="results"></div>
 
 <script>
-const API_KEY = "YOUR_API_KEY_HERE";
+const API_KEY = "f4a3f84e2c82b0b2f13c9f19e1b5c6a1"; // مثال تجريبي، يفضل تجيب مفتاح خاص بيك
 const results = document.getElementById("results");
 const searchInput = document.getElementById("search");
 const title = document.getElementById("title");
@@ -129,16 +129,23 @@ async function searchMovies(query) {
   results.innerHTML = "⏳ ...";
 
   const res = await fetch(
-    `https://api.themoviedb.org/3/search/movie?api_key=${API_KEY}&query=${query}&language=${language}`
+    `https://api.themoviedb.org/3/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(query)}&language=${language}`
   );
   const data = await res.json();
   results.innerHTML = "";
+
+  if (data.results.length === 0) {
+    results.innerHTML = `<p style="text-align:center">No movies found</p>`;
+    return;
+  }
 
   data.results.slice(0, 8).forEach(movie => createCard(movie));
 }
 
 async function createCard(movie) {
-  if (!movie.poster_path) return;
+  const poster = movie.poster_path
+    ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+    : "https://via.placeholder.com/500x750?text=No+Image";
 
   const trailerRes = await fetch(
     `https://api.themoviedb.org/3/movie/${movie.id}/videos?api_key=${API_KEY}`
@@ -150,9 +157,9 @@ async function createCard(movie) {
   card.className = "card";
 
   card.innerHTML = `
-    <div class="fav" onclick="addFav(${movie.id}, '${movie.title}')">❤️</div>
-    <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}">
-    <p>${movie.title}</p>
+    <div class="fav" onclick="addFav(${movie.id}, '${movie.title.replace(/'/g, "\\'")}')">❤️</div>
+    <img src="${poster}">
+    <p>${movie.title} (${movie.release_date ? movie.release_date.split('-')[0] : 'N/A'})</p>
     ${
       trailer
         ? `<iframe src="https://www.youtube.com/embed/${trailer.key}"></iframe>`
